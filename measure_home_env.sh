@@ -18,8 +18,10 @@ while getopts ":d-:" opt; do
     esac
 done
 
-CO2=$(${CMD_HOME}/measure_air_quality | ${JQ_CMD} -c -M .co2)
-HOME_ENV=$(${CMD_HOME}/measure_home_env_fs --dryrun | ${JQ_CMD} -c -M --argjson co2 ${CO2} '. |= .+ {"co2": $co2}')
+BASE=$(${CMD_HOME}/measure_home_env_fs --dryrun)
+CO2="{\"co2\": $(${CMD_HOME}/measure_air_quality | ${JQ_CMD} -c -M .co2)}"
+DUST="{\"dust\": $(${CMD_HOME}/measure_air_dust | ${JQ_CMD} -c -M .dust_density)}"
+HOME_ENV=$(echo "$BASE" "$CO2" "$DUST" | ${JQ_CMD} -s -c '.[0] * .[1] * .[2]')
 
 if [ "$dry" = "TRUE" ]; then
     echo ${HOME_ENV}
